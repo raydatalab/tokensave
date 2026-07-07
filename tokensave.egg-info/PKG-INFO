@@ -1,0 +1,130 @@
+Metadata-Version: 2.4
+Name: tokensave
+Version: 0.1.0
+Summary: One command to slash your LLM API bills — context compression, caching optimization, model routing. Open box, save tokens.
+Author: raydatalab
+License: Apache 2.0
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: headroom-ai>=0.30.0
+
+# TokenSave ⚡
+
+### One command to slash your LLM API bills.
+
+```bash
+pip install tokensave
+tokensave setup        # <-- 就这一行，剩下的它自己搞定
+```
+
+---
+
+## What
+
+TokenSave is an all-in-one context optimization layer for LLM API users.  
+It combines **four layers** of token-saving techniques into a single `setup` command:
+
+| Layer | Method | Typical Savings |
+|-------|--------|-----------------|
+| ① | **Context compression** (headroom) | 60–95% on tool outputs, logs, RAG chunks |
+| ② | **Prompt caching optimization** | 90% on cached prefixes |
+| ③ | **Session lifecycle management** | 20–40% from shorter contexts |
+| ④ | **Output budget control** | 10–30% from leaner responses |
+
+No config files. No YAML. No "before you start, set up these 5 things."  
+You install it, run `setup`, and your API calls start costing less.
+
+---
+
+## Why
+
+If you're paying for LLM API access — Claude Code, OpenAI, custom agents — most of what you're paying for is **noise**. Tool outputs, verbose logs, repeated conversation history, bloated system prompts. The model doesn't need most of it to give you the same answer.
+
+TokenSave strips it at the proxy level before it ever reaches the API.  
+Your code doesn't change. Your workflow doesn't change. Just your bill.
+
+---
+
+## How it works
+
+```
+Your tool (Claude Code, any OpenAI/Anthropic client)
+       │
+       ▼
+TokenSave proxy ─── layer① compress ─── layer② cache ───→ Real API
+       │
+       ▼
+  Returns same answer, fewer tokens
+```
+
+The proxy speaks both **OpenAI-compatible** (`/v1/chat/completions`) and **Anthropic-compatible** (`/v1/messages`) formats. Anything that can point to a custom API base URL can use TokenSave.
+
+---
+
+## Commands
+
+| Command | What it does |
+|---------|-------------|
+| `tokensave setup` | Detect your environment, install deps, start proxy, configure auto-start |
+| `tokensave status` | Show running state, compression ratio, dollars saved |
+| `tokensave stats` | Detailed lifetime statistics |
+| `tokensave off` | Stop the proxy |
+
+---
+
+## Supported tools
+
+| Tool | Status | Notes |
+|------|--------|-------|
+| Claude Code (API mode) | ✅ Auto-detect | Set `ANTHROPIC_BASE_URL=http://127.0.0.1:18787` |
+| Any OpenAI client | ✅ Auto-proxy | Set `OPENAI_BASE_URL=http://127.0.0.1:18787/v1` |
+| Any Anthropic client | ✅ Auto-proxy | Set `ANTHROPIC_BASE_URL=http://127.0.0.1:18787` |
+| SillyTavern | ✅ Manual config | Point connection profile to proxy URL |
+| Cursor / Continue.dev | ✅ Manual config | Custom API endpoint in settings |
+| Custom scripts | ✅ Universal | Just set the base URL env var |
+
+---
+
+## For the technically curious
+
+TokenSave is built on top of **[headroom](https://github.com/chopratejas/headroom)** — the open-source context compression layer that's been trending #2 on GitHub. Headroom handles the heavy lifting: content-aware compression, type-specific compressors (code, JSON, prose, logs), and reversible retrieval when the model needs the full detail.
+
+We chose headroom because:
+- **Content-aware** — it compresses code differently from prose, JSON differently from logs
+- **Reversible** — if the model needs the full data, it can call a retrieval tool
+- **Proven** — 60–95% compression with the same answers in benchmarks
+
+But TokenSave isn't headroom. It's headroom **plus** prompt caching optimization, session management, auto-detection, and a zero-config experience — all behind a single `setup` command.
+
+Future compressors planned: LLMLingua, Selective Context.
+
+---
+
+## Comparison
+
+| | Raw API | Headroom alone | TokenSave |
+|--|---------|---------------|-----------|
+| Install | pip install | pip + read docs + config | **one command** |
+| Claude Code setup | — | headroom wrap claude | **auto-detect** |
+| Universal proxy | — | headroom proxy —port 8787 | **auto-start** |
+| Savings tracking | — | — | **built-in** |
+| Multi-compressor | — | headroom only | **pluggable** |
+| Shell integration | — | manual | **auto-hook** |
+
+---
+
+## Roadmap
+
+- [x] Transparent proxy (OpenAI + Anthropic format)
+- [x] Auto-detection (Claude Code, API keys, tool configs)
+- [x] Stats tracking and lifetime savings
+- [ ] LLMLingua backend
+- [ ] Streaming response support
+- [ ] Per-model compression profiles
+- [ ] Team/multi-user stats dashboard
+
+---
+
+Made by [raydatalab](https://github.com/raydatalab) · Apache 2.0  
+
+*Video walkthrough: [link to YouTube]*

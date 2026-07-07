@@ -1,0 +1,13 @@
+README.md
+pyproject.toml
+tokensave/__init__.py
+tokensave/cli.py
+tokensave/proxy.py
+tokensave.egg-info/PKG-INFO
+tokensave.egg-info/SOURCES.txt
+tokensave.egg-info/dependency_links.txt
+tokensave.egg-info/entry_points.txt
+tokensave.egg-info/requires.txt
+tokensave.egg-info/top_level.txt
+tokensave/compressors/__init__.py
+tokensave/detectors/__init__.py

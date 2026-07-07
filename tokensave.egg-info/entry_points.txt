@@ -1,0 +1,2 @@
+[console_scripts]
+tokensave = tokensave.cli:main
