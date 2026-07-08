@@ -9,6 +9,12 @@ description = "Context optimization for LLM API calls. pip install, bills go dow
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
 authors = [
     {name = "raydatalab"}
 ]
