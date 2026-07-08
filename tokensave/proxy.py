@@ -73,8 +73,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
     """HTTP handler that proxies LLM API requests through compression."""
 
     def do_OPTIONS(self):
-        self._cors_headers()
         self.send_response(200)
+        self._cors_headers()
         self.end_headers()
 
     def do_POST(self):
@@ -169,8 +169,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 stats.estimated_cost_saved += savings
                 stats.save()
 
-                self._cors_headers()
                 self.send_response(200)
+                self._cors_headers()
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(response_data)
@@ -226,8 +226,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
                     stats.estimated_cost_saved += savings
                     stats.save()
 
-                self._cors_headers()
                 self.send_response(200)
+                self._cors_headers()
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(response_data)
@@ -252,15 +252,15 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
     def _forward_raw(self, body: bytes):
         """Pass through for non-chat endpoints."""
-        self._cors_headers()
         self.send_response(200)
+        self._cors_headers()
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(body)
 
     def _send_error(self, code: int, message: str):
-        self._cors_headers()
         self.send_response(code)
+        self._cors_headers()
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps({"error": {"message": message}}).encode())
