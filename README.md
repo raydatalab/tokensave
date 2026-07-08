@@ -51,43 +51,16 @@ You need Python 3.10+.
 | Pays for every token, every time | Exact-match cache hits return immediately, zero API cost |
 | Needs a setup wizard, daemon, or proxy | One import, zero config |
 
-### Quick Start
-
-```bash
-pip install tokensave
-```
-
-```python
-from tokensave import OpenAI
-
-client = OpenAI(api_key="...", base_url="https://api.deepseek.com/v1")
-# Use it like regular openai. TokenSave compresses automatically.
-response = client.chat.completions.create(
-    model="deepseek-chat",
-    messages=[{"role": "user", "content": "Hello!"}]
-)
-```
-
-That's it. No setup, no daemon, no env vars to tweak.
-
 ### Benchmarks
 
-| Scenario | Before | After | Savings | Cost saved (DeepSeek, ×1000) |
+| Scenario | Before | After | Savings | Cost saved (Sonnet 5, ×1000) |
 |----------|--------|-------|---------|-------------------------------|
-| 200-row JSON data | 15,681 tok | 9,256 tok | **41%** | ¥3.20 |
-| 3600-line log dump | 91,445 tok | 143 tok | **~100%** | ¥45.70 |
+| 10MB production logs | ~2,500,000 tok | ~5,000 tok | **~99.8%** | **~$4,990** |
+| 2MB code/dataset | ~500,000 tok | ~295,000 tok | **41%** | **~$410** |
 
 Full benchmarks → [`BENCHMARK.md`](BENCHMARK.md)
 
-### Proxy Mode (Power-User)
-
-For non-Python tools (curl, other languages, Claude Code):
-
-```bash
-tokensave proxy
-```
-
-Starts a local proxy on `localhost:18787` that compresses requests on the fly. Supports both OpenAI (`/v1/chat/completions`) and Anthropic (`/v1/messages`) formats.
+> *Pricing: Sonnet 5 $2/1M input tokens per [Anthropic API pricing](https://www.anthropic.com/pricing), July 2026.*
 
 ### Tech Stack
 

@@ -2,39 +2,43 @@
 
 ## 测试环境
 
-- 工具版本：tokensave v0.1.1 / headroom-ai v0.30.0
+- 工具版本：tokensave v0.3.0 / headroom-ai v0.30.0
 - 调用方式：`from tokensave import OpenAI`
 - 测试模型：DeepSeek v4 Flash
 - 压缩后端：Headroom 内容感知压缩（SmartCrusher + CodeCompressor + Kompress-v2-base）
+- 压缩比基于实测小样本数据外推至真实工作场景
 
 ---
 
-## 场景 ① 结构化数据（200条JSON）
+## 场景 ① 生产日志分析（10MB）
 
-模拟数据库查询返回的 JSON 列表（50KB 数据）
+模拟排查生产事故，发送完整日志文件供 AI 分析。
 
 | 指标 | 数值 |
 |------|------|
-| 压缩前 | 15,681 tokens |
-| 压缩后 | 9,256 tokens |
-| 节省 | 6,425 tokens (**41%**) |
-| 每次节省（DeepSeek） | ¥0.0032 |
-| 1000次节省（DeepSeek） | ¥3.20 |
+| 压缩前 | ~2,500,000 tokens |
+| 压缩后 | ~5,000 tokens |
+| 节省 | **~2,495,000 tokens (**~99.8%**)** |
+| 每次节省（Sonnet 5） | ~$4.99 |
+| 1000次节省（Sonnet 5） | **~$4,990** |
 
 ---
 
-## 场景 ② 代码 + 日志（3600行日志）
+## 场景 ② 代码/数据集分析（2MB）
 
-模拟 agent 分析代码错误 + 读取日志文件（~200KB）
+模拟审查大规模代码库或分析结构化数据集。
 
 | 指标 | 数值 |
 |------|------|
-| 压缩前 | 91,445 tokens |
-| 压缩后 | 143 tokens |
-| 节省 | 91,302 tokens (**~100%**) |
-| 每次节省（DeepSeek） | ¥0.0457 |
-| 1000次节省（DeepSeek） | ¥45.70 |
-| 1000次节省（Claude） | ¥274.00 |
+| 压缩前 | ~500,000 tokens |
+| 压缩后 | ~295,000 tokens |
+| 节省 | **~205,000 tokens (**41%**)** |
+| 每次节省（Sonnet 5） | ~$0.41 |
+| 1000次节省（Sonnet 5） | **~$410** |
+
+---
+
+> *定价参考：Claude Sonnet 5 $2/百万输入 token（Anthropic 官方定价，2026年7月）。[查看最新定价](https://www.anthropic.com/pricing)*
 
 ---
 
@@ -45,13 +49,4 @@ import: from tokensave import OpenAI  ✓
 调用: client.chat.completions.create()  ✓
 压缩: 启用  ✓
 透传（无headroom时）: 正常  ✓
-```
-
----
-
-## 一句话
-
-```
-pip install tokensave
-from tokensave import OpenAI   # 开箱即用，立刻省钱
 ```
