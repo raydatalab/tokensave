@@ -1,34 +1,123 @@
 """
 TokenSave — Context optimization for LLM API calls.
 
-Safe defaults: pip install does nothing but make the package available.
-Use `from tokensave import OpenAI` as a drop-in for `from openai import OpenAI`.
-Messages are compressed before sending. Never breaks your existing workflow.
+  pip install tokensave   ← the only command you need
+
+Your existing code keeps working — `from openai import OpenAI` is
+automatically optimized. No import changes required.
+
+What happens transparently:
+  1. Exact-match SQLite cache → repeated requests cost zero
+  2. headroom.compress() → intelligent prompt compression
+  3. Message normalization → more cache hits
+  4. Fail-open → any error passes original request through unchanged
+
+Set TOKENSAVE_OFF=1 to disable.
+Set TOKENSAVE_QUIET=1 to suppress activation/exit messages.
+
+Heavy lifting by mature, battle-tested libraries:
+  - headroom — SmartCrusher compression + CacheAligner cache alignment
+  - litellm — multi-provider prompt cache injection (via headroom)
+  - tiktoken — accurate token counting (via headroom)
 """
 
-__version__ = "0.1.3"
+__version__ = "0.3.0"
 
+import atexit
 import json
 import logging
+import os
+import sys
 
 logger = logging.getLogger("tokensave")
 
-# Check headroom availability once at import time
+# ── Auto-patch openai.OpenAI on import ─────────────────────────────────
+from tokensave._auto import _patch as _auto_patch
+
+_auto_patch()
+
+# ── Rule-based compressor (always available, zero extra deps) ─────────
+from tokensave.compressors.rules import compress_messages as _rule_compress
+
+# ── Headroom availability check ────────────────────────────────────────
 _HAS_HEADROOM = False
 try:
     import headroom  # noqa: F401
+
     _HAS_HEADROOM = True
 except ImportError:
     pass
 
 
-class _OptimizedCompletions:
-    """Wraps openai.resources.chat.Completions with:
+# ── Session savings tracking (memory-only, lightweight) ────────────────
+_session_calls = 0
+_session_cache_hits = 0
+_session_tokens_saved = 0
 
-    1. Prompt normalization (whitespace, formatting)
-    2. Exact-match semantic cache (SQLite, zero-config)
-    3. Auto max_tokens (if user didn't set one)
-    4. Headroom compression (if available)
+
+def _estimate_tokens(text: str) -> int:
+    """Rough token estimate: 4 chars ≈ 1 token."""
+    if isinstance(text, str):
+        return max(1, len(text) // 4)
+    if isinstance(text, list):
+        return sum(_estimate_tokens(str(m)) for m in text)
+    return 0
+
+
+def _estimate_cost_saved(tokens: int, model: str = "") -> float:
+    """Estimate dollars saved. Uses litellm if available, otherwise conservative."""
+    try:
+        import litellm
+
+        cost_map = getattr(litellm, "model_cost", None)
+        if cost_map and model in cost_map:
+            cost_per_1k = cost_map[model].get("input_cost_per_token", 0)
+            return tokens * cost_per_1k
+    except Exception:
+        pass
+    # Conservative: assume ~$0.001/1K tokens (cheaper than most frontier models)
+    return tokens * 0.001 / 1000
+
+
+def _print_exit_summary():
+    """atexit callback: print one-line session savings summary."""
+    if os.environ.get("TOKENSAVE_QUIET"):
+        return
+    if _session_calls == 0:
+        return
+    cost = _estimate_cost_saved(_session_tokens_saved)
+    if cost >= 0.01:
+        print(
+            f"[TokenSave] {_session_calls} calls, "
+            f"{_session_cache_hits} cache hits, "
+            f"~{_session_tokens_saved:,} tokens saved "
+            f"(~${cost:.2f})",
+            flush=True,
+        )
+    else:
+        print(
+            f"[TokenSave] {_session_calls} calls, "
+            f"{_session_cache_hits} cache hits, "
+            f"~{_session_tokens_saved:,} tokens saved",
+            flush=True,
+        )
+
+
+atexit.register(_print_exit_summary)
+
+
+# ── Pipeline classes ───────────────────────────────────────────────────
+
+
+class _OptimizedCompletions:
+    """Wraps openai.resources.chat.Completions with transparent optimizations.
+
+    Pipeline:
+      1. Normalize message content (lossless text cleanup)
+      2. Exact-match cache lookup (SHA-256, SQLite, zero-cost)
+      3. headroom.compress() — compression + cache alignment
+      4. Real API call (fail-open if anything breaks)
+      5. Cache the response for next time
     """
 
     def __init__(self, completions, compress_fn):
@@ -36,39 +125,77 @@ class _OptimizedCompletions:
         self._compress = compress_fn
         from tokensave import cache as _cache
         from tokensave import normalizer as _norm
+
         self._cache = _cache
         self._norm = _norm
 
     def create(self, *args, **kwargs):
+        global _session_calls, _session_cache_hits, _session_tokens_saved
+
         if "messages" not in kwargs:
             return self._completions.create(*args, **kwargs)
 
         streaming = kwargs.get("stream", False)
+        model = kwargs.get("model", "")
 
-        # 1. Normalize messages (lossless — cleans formatting)
+        # ── 1. Normalize messages (lossless text cleanup) ──────────────
         messages = self._norm.normalize_messages(kwargs["messages"])
         kwargs["messages"] = messages
 
-        model = kwargs.get("model", "")
+        cache_params = {
+            k: kwargs.get(k)
+            for k in (
+                "temperature",
+                "top_p",
+                "frequency_penalty",
+                "presence_penalty",
+                "stop",
+                "tools",
+                "response_format",
+            )
+            if k in kwargs
+        }
 
-        cache_params = {k: kwargs.get(k) for k in
-            ("temperature", "top_p", "frequency_penalty", "presence_penalty",
-             "stop", "tools", "response_format")
-            if k in kwargs}
-
-        # 2. Cache check (exact match — same request = same response)
+        # ── 2. Exact-match cache ──────────────────────────────────────
         if not streaming:
             cached = self._cache.get(model, messages, **cache_params)
             if cached is not None:
+                _session_calls += 1
+                _session_cache_hits += 1
+                # Count tokens saved from the cached response
+                usage = cached.get("usage", {})
+                tokens = usage.get("total_tokens", 0)
+                if tokens <= 0:
+                    tokens = _estimate_tokens(json.dumps(cached))
+                _session_tokens_saved += tokens
                 return self._reconstruct(cached)
 
-        # 3. Compress messages (lossy but recoverable via CCR)
+        # ── 3. Estimate tokens before compression ─────────────────────
+        tokens_before = _estimate_tokens(json.dumps(messages))
+
+        # ── 4. Compress messages via headroom (or fallback) ───────────
         kwargs["messages"] = self._compress(messages)
 
-        # 4. Real API call
+        # ── 5. Real API call ──────────────────────────────────────────
         result = self._completions.create(*args, **kwargs)
 
-        # 5. Cache the response (non-streaming only)
+        # ── 6. Track savings ──────────────────────────────────────────
+        _session_calls += 1
+        try:
+            # Use prompt_tokens from API response (input tokens actually sent)
+            if hasattr(result, "usage") and result.usage:
+                tokens_after = getattr(result.usage, "prompt_tokens", 0)
+            elif hasattr(result, "model_dump"):
+                usage = result.model_dump().get("usage", {})
+                tokens_after = usage.get("prompt_tokens", 0)
+            else:
+                tokens_after = tokens_before
+            saved = max(0, int(tokens_before) - int(tokens_after or 0))
+            _session_tokens_saved += saved
+        except (TypeError, ValueError, AttributeError):
+            pass  # non-numeric usage data (e.g. mock objects in tests)
+
+        # ── 7. Cache response for next time ───────────────────────────
         if not streaming:
             try:
                 if hasattr(result, "model_dump"):
@@ -87,9 +214,9 @@ class _OptimizedCompletions:
         """Rebuild a ChatCompletion-like object from cached dict."""
         try:
             from openai.types.chat import ChatCompletion
+
             return ChatCompletion.model_validate(data)
         except Exception:
-            # Fallback: return a dict-like wrapper
             return _DictWrapper(data)
 
     def __getattr__(self, name):
@@ -142,25 +269,20 @@ class _OptimizedOpenAI:
     def _init_compressor(self):
         try:
             from headroom import compress as _hr_compress
+
             self._hr_compress = _hr_compress
-            logger.info("tokensave: Headroom compression active")
-        except Exception as e:
-            logger.warning(
-                f"tokensave: Headroom init failed ({e}), running passthrough"
-            )
-            self._hr_compress = None
+        except Exception:
+            pass
 
     def _compress_messages(self, messages):
-        if not self._hr_compress:
-            return messages
-        try:
-            result = self._hr_compress(messages)
-            return result.messages
-        except Exception as e:
-            logger.warning(
-                f"tokensave: compression failed ({e}), sending uncompressed"
-            )
-            return messages
+        messages = _rule_compress(messages)
+        if self._hr_compress:
+            try:
+                result = self._hr_compress(messages, optimize=True)
+                messages = result.messages
+            except Exception as e:
+                logger.debug(f"tokensave: headroom skipped ({e}), rules-only")
+        return messages
 
     def __getattr__(self, name):
         if name == "chat":
@@ -169,30 +291,22 @@ class _OptimizedOpenAI:
 
 
 class OpenAI:
-    """
-    Drop-in replacement for `openai.OpenAI` with automatic optimizations.
+    """Drop-in replacement for `openai.OpenAI` with automatic optimizations.
 
     Usage:
-        # Instead of:
-        #   from openai import OpenAI
-        #   client = OpenAI(api_key="...")
-
         from tokensave import OpenAI
         client = OpenAI(api_key="...")
 
-    Optimizations applied transparently on every API call:
-    • Prompt normalization — trims whitespace, collapses blank lines (lossless)
-    • Request cache — repeated identical requests return cached response (zero tokens)
-    • Message compression — with headroom installed, compresses before sending
+    Or just keep using `from openai import OpenAI` — tokensave auto-patches it.
     """
 
     def __new__(cls, *args, **kwargs):
         try:
             from openai import OpenAI as _RealOpenAI
+
             client = _RealOpenAI(*args, **kwargs)
         except ImportError:
             raise ImportError(
                 "tokensave requires 'openai' package. Install with: pip install openai"
             )
-
         return _OptimizedOpenAI(client)

@@ -76,7 +76,7 @@ class TestOptimizedOpenAI:
         original = [{"role": "user", "content": "long message"}]
         result = comp._compress_messages(original)
 
-        mock_compress.assert_called_once_with(original)
+        mock_compress.assert_called_once_with(original, optimize=True)
         assert result == [{"role": "user", "content": "short"}]
 
     def test_compress_messages_graceful_fallback(self):
