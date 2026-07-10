@@ -1,74 +1,105 @@
+# TokenSave v0.4.0
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/tokensave-0.3.0-blue?style=flat-square&labelColor=black">
-    <img src="https://img.shields.io/badge/tokensave-0.3.0-blue?style=flat-square" alt="tokensave">
-  </picture>
-</p>
-
-<p align="center">
-  <a href="README.zh.md">🇨🇳 中文</a>
-</p>
+> Context optimization for LLM API calls + waste analyzer.
+> `pip install tokensave` — bills go down.
 
 ---
 
-# TokenSave
+## What's New in 0.4.0
 
-<p align="center">
-  <a href="https://pypi.org/project/tokensave/">
-    <img src="https://img.shields.io/pypi/v/tokensave?style=flat-square&label=version" alt="PyPI">
-  </a>
-  <a href="https://pypi.org/project/tokensave/">
-    <img src="https://img.shields.io/pypi/pyversions/tokensave?style=flat-square" alt="Python">
-  </a>
-  <a href="LICENSE">
-    <img src="https://img.shields.io/pypi/l/tokensave?style=flat-square" alt="License">
-  </a>
-  <a href="https://github.com/raydatalab/tokensave">
-    <img src="https://img.shields.io/github/stars/raydatalab/tokensave?style=flat-square" alt="Stars">
-  </a>
-  <a href="https://pypi.org/project/tokensave/">
-    <img src="https://img.shields.io/pypi/dm/tokensave?style=flat-square" alt="Downloads">
-  </a>
-</p>
+**`tokensave analyze`** — find out where your agent is wasting tokens, and get a one-click fix.
 
-LLM API calls cost money. Most of those tokens are wasted on repeated instructions, verbose logs, boilerplate data, and conversation history that keeps growing. TokenSave strips the redundancy before it reaches the API.
+```bash
+$ tokensave analyze
 
-**`pip install tokensave` → `from tokensave import OpenAI` → bills go down.**
+Session 2026-07-11_abc123: 12,400 tokens, ~$0.19, 41% avoidable.
 
-### Supported Platforms
+Top wastes:
+  #1 duplicate_tool_calls (8x): ~4,800 tokens — read the same file 8 times
+  #2 model_mismatch (5x): ~860 tokens — flash-tier queries ran on pro
+  #3 context_bloat: ~3,700 tokens — 40% of input is stale context
 
-`Linux` · `macOS` · `Windows` · `WSL`
+Send to your agent: "Before reading a file, check if you already read it..."
+```
 
-You need Python 3.10+.
+## What It Does (Two Modes)
 
-### What It Does
+### Mode 1: Analyze (`tokensave analyze`) ← NEW in 0.4.0
 
-| Before | After |
-|--------|-------|
-| Sends full conversation history every time | Compresses redundant context on the fly |
-| Repeats the same system prompt verbatim | Normalizes and deduplicates |
-| Pays for every token, every time | Exact-match cache hits return immediately, zero API cost |
-| Needs a setup wizard, daemon, or proxy | One import, zero config |
+Reads a Hermes session file and detects five categories of waste:
 
-### Benchmarks
+| Detector | What it finds |
+|----------|---------------|
+| Duplicate tool calls | Same tool + same args called 2+ times |
+| Context bloat | 40%+ of context is stale/noise |
+| Sequential execution | 3+ independent tool calls waiting in series |
+| Model mismatch | Simple queries running on expensive models |
+| Heartbeat waste | Cron/scheduled messages on pro-tier |
 
-| Scenario | Before | After | Savings | Cost saved (Sonnet 5, ×1000) |
-|----------|--------|-------|---------|-------------------------------|
-| 10MB production logs | ~2,500,000 tok | ~5,000 tok | **~99.8%** | **~$4,990** |
-| 2MB code/dataset | ~500,000 tok | ~295,000 tok | **41%** | **~$410** |
+Output: ≤5 lines, actionable. Zero config. 100% local.
+
+### Mode 2: Pipeline (v0.3.0, unchanged)
+
+Transparent OpenAI wrapper — `from tokensave import OpenAI` — automatic normalization, exact-match cache, and context compression. Cuts token usage without changing your code.
+
+## Why Tokensave + Smart Router
+
+| | TokenSave | Smart Router |
+|---|:---:|:---:|
+| **When** | After the session (diagnosis) | Before each message (prevention) |
+| **Job** | "Here's where you're wasting money" | "Use this model instead" |
+| **User** | Run manually, get insights | Runs automatically, suggests switches |
+
+Use both for maximum savings: Smart Router prevents waste, TokenSave reveals what slipped through.
+
+## Install
+
+```bash
+pip install tokensave
+```
+
+Or as a Hermes skill:
+
+```bash
+hermes skills install raydatalab/tokensave     # from ClawHub
+hermes skills install raydatalab/tokensave     # from GitHub
+```
+
+## Usage
+
+```bash
+# Analyze your latest session
+tokensave analyze
+
+# Analyze a specific session
+tokensave analyze ~/.hermes/sessions/session_2026-07-11.json
+
+# Pipeline mode (automatic)
+export OPENAI_API_KEY=sk-...
+python3 -c "
+from tokensave import OpenAI
+client = OpenAI()
+# All calls go through normalize → cache → compress
+"
+```
+
+## Benchmarks (Pipeline Mode)
+
+| Scenario | Before | After | Savings |
+|----------|--------|-------|---------|
+| 10MB production logs | ~2,500,000 tok | ~5,000 tok | **~99.8%** |
+| 2MB code/dataset | ~500,000 tok | ~295,000 tok | **41%** |
 
 Full benchmarks → [`BENCHMARK.md`](BENCHMARK.md)
 
-> *Pricing: Sonnet 5 $2/1M input tokens per [Anthropic API pricing](https://www.anthropic.com/pricing), July 2026.*
-
-### Tech Stack
+## Tech Stack
 
 | Component | Role |
 |-----------|------|
-| [`headroom-ai`](https://github.com/nicktrisolaran/headroom) | SmartCrusher + CodeCompressor content compression |
-| SQLite (stdlib) | Zero-config exact-match cache |
+| Python stdlib | Waste detection, session parsing |
+| SQLite (stdlib) | Exact-match cache |
+| [`headroom-ai`](https://github.com/nicktrisolaran/headroom) | SmartCrusher + CodeCompressor (pipeline mode) |
 
-### License
+## License
 
 Apache 2.0 — see [LICENSE](LICENSE).
