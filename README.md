@@ -1,12 +1,4 @@
-# TokenSave
-
-<p align="center">
-  <a href="https://pypi.org/project/tokensave/"><img src="https://img.shields.io/pypi/v/tokensave?color=blue" alt="PyPI version"></a>
-  <a href="https://pypi.org/project/tokensave/"><img src="https://img.shields.io/pypi/dm/tokensave?color=blue" alt="PyPI downloads"></a>
-  <a href="https://pypi.org/project/tokensave/"><img src="https://img.shields.io/pypi/pyversions/tokensave?color=blue" alt="Python versions"></a>
-  <a href="https://github.com/raydatalab/tokensave/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
-  <a href="https://github.com/raydatalab/tokensave"><img src="https://img.shields.io/github/stars/raydatalab/tokensave?style=social" alt="GitHub stars"></a>
-</p>
+# TokenSave v0.4.1
 
 > Token waste analyzer for AI agents — find where your money goes and get one-click fix prompts.
 > `pip install tokensave` — bills go down.
