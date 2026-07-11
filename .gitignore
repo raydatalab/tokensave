@@ -12,3 +12,9 @@ CLAUDE.md
 AGENTS.md
 .cursorrules
 TODO.md
+
+# Internal design docs — not for public repo
+DESIGN-*.md
+
+# Chinese-only mirror — not for public repo
+README.zh.md
