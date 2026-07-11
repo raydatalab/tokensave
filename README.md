@@ -26,15 +26,14 @@ Send to your agent: "Before reading a file, check if you already read it..."
 
 ### Mode 1: Analyze (`tokensave analyze`) ← NEW in 0.4.0
 
-Reads a Hermes session file and detects five categories of waste:
+Reads Hermes session data from `~/.hermes/state.db` (SQLite, primary) or `~/.hermes/sessions/*.json` (API error dumps, fallback) and detects four categories of waste:
 
 | Detector | What it finds |
 |----------|---------------|
-| Duplicate tool calls | Same tool + same args called 2+ times |
-| Context bloat | 40%+ of context is stale/noise |
-| Sequential execution | 3+ independent tool calls waiting in series |
+| Duplicate tool calls | Same tool + same args called 2+ times (exact + near-duplicate) |
+| Context bloat | Stale overlapping content, oversized tool outputs, unused tools, session overhead |
 | Model mismatch | Simple queries running on expensive models |
-| Heartbeat waste | Cron/scheduled messages on pro-tier |
+| Heartbeat waste | Cron/scheduled/idle-check messages on pro-tier |
 
 Output: ≤5 lines, actionable. Zero config. 100% local.
 
@@ -68,11 +67,17 @@ hermes skills install raydatalab/tokensave     # from GitHub
 ## Usage
 
 ```bash
-# Analyze your latest session
+# Analyze your latest session (auto-detect from state.db)
 tokensave analyze
 
-# Analyze a specific session
-tokensave analyze ~/.hermes/sessions/session_2026-07-11.json
+# Analyze a specific session by ID
+tokensave analyze 20260710_214623_e95335
+
+# Analyze an error request dump
+tokensave analyze ~/.hermes/sessions/request_dump_*.json
+
+# Run only specific detectors
+tokensave analyze --detectors duplicate_tool_calls,model_mismatch
 
 # Pipeline mode (automatic)
 export OPENAI_API_KEY=sk-...

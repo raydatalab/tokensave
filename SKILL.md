@@ -44,10 +44,19 @@ prompt to fix it.
 
 ## How It Works
 
-When you send "tokensave" or ask about cost/waste, run:
+When you send "tokensave" or ask about cost/waste, just run:
 
 ```bash
-tokensave analyze ~/.hermes/sessions/<latest>.json
+tokensave analyze
+```
+
+It auto-detects the latest session from `~/.hermes/state.db` (the primary session store). You can also target a specific source:
+
+```bash
+tokensave analyze <session_id>          # specific session from state.db
+tokensave analyze <file.json>           # error request dump
+tokensave analyze <directory/>          # latest JSON in directory
+tokensave analyze --detectors dup,bloat # specific detectors only
 ```
 
 Copy the output and paste it into your response. The user sees:
@@ -70,9 +79,31 @@ Send to your agent: "Before reading a file, check if you already..."
 - User mentions "waste", "expensive", "save money"
 - You want to help the user understand where their money goes
 
+## What It Detects
+
+Four waste detectors run against your session:
+
+| Detector | What it finds |
+|----------|---------------|
+| Duplicate tool calls | Same tool + same args called 2+ times (exact + near-duplicate) |
+| Context bloat | Stale/redundant context, oversized tool outputs, unused tool definitions, session overhead |
+| Model mismatch | Simple queries running on expensive models — tells you which cheaper model to use |
+| Heartbeat waste | Cron jobs and idle/status checks that could run on a cheaper model |
+
+## Data Sources
+
+TokenSave reads from two sources (no config needed):
+
+| Source | Format | What's there |
+|--------|--------|-------------|
+| `~/.hermes/state.db` | SQLite | Primary — full session transcripts with token counts, costs, and metadata |
+| `~/.hermes/sessions/*.json` | JSON | API error request dumps — partial data but useful when SQLite is unavailable |
+
+Auto-detect tries SQLite first, falls back to JSON, then gives a clear error message.
+
 ## What You Need
 
-- Hermes Agent v0.17+
+- Python 3.10+
 - `pip install tokensave`
 - Nothing else — no API keys, no network, no config
 
@@ -87,5 +118,5 @@ you don't need to do anything.
 
 | Tier | What it checks | Output |
 |------|---------------|--------|
-| `analyze` | Session file | Waste report + fix prompt |
+| `analyze` | SQLite sessions + JSON error dumps | Waste report + fix prompt |
 | `pipeline` | Transparent proxy | Automatic token savings |
