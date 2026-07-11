@@ -24,6 +24,18 @@ triggers:
   - optimize cost
   - 优化成本
   - check waste
+  - reduce cost
+  - cut cost
+  - api spending
+  - token budget
+  - expensive model
+  - how much did this cost
+  - estimate cost
+  - cost breakdown
+  - where is my money going
+  - agent spending
+  - api fees
+  - lower my bill
 metadata:
   hermes:
     tags: [cost-optimization, token-analysis, waste-detection, diagnostics]
