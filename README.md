@@ -117,10 +117,6 @@ Full benchmarks → [`BENCHMARK.md`](BENCHMARK.md)
 | SQLite (stdlib) | Exact-match cache |
 | [`headroom-ai`](https://github.com/nicktrisolaran/headroom) | SmartCrusher + CodeCompressor (pipeline mode) |
 
-## Contributors
-
-- [**raydatalab**](https://github.com/raydatalab) — creator, all design & code
-
 ## License
 
 Apache 2.0 — see [LICENSE](LICENSE).
