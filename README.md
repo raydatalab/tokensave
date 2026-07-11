@@ -3,6 +3,10 @@
 > Token waste analyzer for AI agents — find where your money goes and get one-click fix prompts.
 > `pip install tokensave` — bills go down.
 
+<p align="center">
+  <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fclawhub.ai%2Fapi%2Fv1%2Fskills%2Ftokensave&query=%24.skill.stats.downloads&label=ClawHub+downloads&color=blue&cacheSeconds=3600" alt="ClawHub downloads">
+</p>
+
 ---
 
 ## What's New in 0.4.0
