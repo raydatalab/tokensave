@@ -21,7 +21,7 @@ Heavy lifting by mature, battle-tested libraries:
   - tiktoken — accurate token counting (via headroom)
 """
 
-__version__ = "0.4.3"
+__version__ = "0.4.4"
 
 import atexit
 import json

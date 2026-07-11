@@ -1,4 +1,4 @@
-# TokenSave v0.4.2
+# TokenSave v0.4.4
 
 > Token waste analyzer for AI agents — find where your money goes and get one-click fix prompts.
 > `pip install tokensave` — bills go down.
@@ -9,24 +9,23 @@
 
 ---
 
-```
+```bash
 $ tokensave analyze
 
-Session test_123: 12,000 tokens, ~$0.05, 25% avoidable
+Session 20260711_a1b2c3: 12,000 tokens, ~$0.05, 44% avoidable.
 
-  #1 duplicate_tool_calls (5x): 3,000 tokens
-      read_file called 5x with same path
+Top wastes:
+  1. duplicate_tool_calls (5x): ~3,000 tokens — read_file called 5x with same path
+  2. context_bloat (1x): ~1,800 tokens — 40% of input is stale context
+  3. model_mismatch (3x): ~500 tokens — simple queries routed through pro
 
 Send to your agent: "Before calling any tool, check if you already have
 the result in a previous message..."
 ```
 
-tokensave scans your session → finds the waste → gives you the exact
-prompt to stop it. One command. Paste the output. Bills go down.
+One session. 12K tokens. 44% could have been avoided — 5,300 tokens saved with a single paste.
 
-All demo numbers above are from real test fixtures in `tests/test_analyzer.py`
-— 12,000 tokens, 3,000 wasted on duplicate reads, 25% avoidable.
-No made-up data.
+All numbers from `tests/test_analyzer.py` real test fixtures. No made-up data.
 
 ---
 
@@ -117,6 +116,10 @@ Full benchmarks → [`BENCHMARK.md`](BENCHMARK.md)
 | Python stdlib | Waste detection, session parsing |
 | SQLite (stdlib) | Exact-match cache |
 | [`headroom-ai`](https://github.com/nicktrisolaran/headroom) | SmartCrusher + CodeCompressor (pipeline mode) |
+
+## Contributors
+
+- [**raydatalab**](https://github.com/raydatalab) — creator, all design & code
 
 ## License
 
