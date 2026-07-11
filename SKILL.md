@@ -1,41 +1,35 @@
 ---
 name: tokensave
-description: Use when analyzing token waste, costs, or API bills. Finds duplicate tool calls, context bloat, model mismatch, and heartbeat waste. 100% local, zero config.
-version: 0.4.4
+description: Use when the user explicitly asks to analyze token waste, costs, or API bills. Finds duplicate tool calls, context bloat, model mismatch, and heartbeat waste. Analyze mode is 100% local, zero config.
+version: 0.4.5
 author: raydatalab
 license: Apache-2.0
 platforms: [linux, macos, wsl]
 triggers:
-  - token waste
+  - tokensave
+  - run tokensave
+  - analyze token waste
+  - analyze my session
+  - check token waste
+  - audit my tokens
+  - session cost analysis
+  - how much did this session cost
+  - analyze token usage
+  - optimize token cost
+  - reduce token cost
+  - model cost analysis
+  - duplicate tool calls
+  - context bloat
+  - token budget analysis
+  - analyze api spending
   - analyze cost
   - audit tokens
-  - save cost
-  - save money
-  - too expensive
-  - api bill
-  - wasted tokens
-  - spending too much
-  - 浪费 token
-  - 省钱
-  - 账单
-  - 分析用量
-  - token usage
-  - model cost
-  - optimize cost
-  - 优化成本
-  - check waste
-  - reduce cost
-  - cut cost
-  - api spending
-  - token budget
-  - expensive model
-  - how much did this cost
-  - estimate cost
-  - cost breakdown
+  - token waste
   - where is my money going
-  - agent spending
+  - cost breakdown
+  - estimate cost
   - api fees
-  - lower my bill
+  - check waste
 metadata:
   hermes:
     tags: [cost-optimization, token-analysis, waste-detection, diagnostics]
@@ -70,20 +64,29 @@ No made-up data.
 
 ## When to Use
 
-- User asks about costs, bills, or token usage
-- User says "analyze my session" or "how much did I spend"
-- User mentions "waste", "expensive", "save money"
-- You want to help the user understand where their money goes
+- User explicitly asks to "run tokensave", "analyze my session", or similar
+- User provides a specific session ID or file path to analyze
+- User asks "how much did this session cost" with clear intent to run analysis
+- User mentions specific waste patterns like "duplicate tool calls" or "context bloat"
+
+## When NOT to Use — Read This First
+
+- Do NOT auto-analyze on general cost complaints ("this is expensive", "save money", "too expensive")
+- Do NOT read session data (~/.hermes/state.db) without explicit user confirmation
+- For general billing questions, explain that TokenSave can analyze a specific session
+  but wait for an explicit command like `tokensave analyze <session_id>`
+- Always prefer `tokensave analyze <session_id>` over auto-detecting the latest session
+  when the user has not explicitly asked for it
 
 ## How It Works
 
-When you send "tokensave" or ask about cost/waste, just run:
+When the user has explicitly asked to run an analysis, use:
 
 ```bash
 tokensave analyze
 ```
 
-It auto-detects the latest session from `~/.hermes/state.db` (the primary session store). You can also target a specific source:
+If the user has provided a specific session ID or path, use that instead:
 
 ```bash
 tokensave analyze <session_id>          # specific session from state.db
@@ -91,6 +94,10 @@ tokensave analyze <file.json>           # error request dump
 tokensave analyze <directory/>          # latest JSON in directory
 tokensave analyze --detectors dup,bloat # specific detectors only
 ```
+
+Always confirm with the user before analyzing if they haven't provided a
+specific session target. Auto-detect only when the user has explicitly
+asked for their "latest session" or "current session."
 
 Copy the output and paste it into your response. The user sees:
 
@@ -131,14 +138,19 @@ Auto-detect tries SQLite first, falls back to JSON, then gives a clear error mes
 
 - Python 3.10+
 - `pip install tokensave`
-- Nothing else — no API keys, no network, no config
+- Analyze mode: nothing else — no API keys, no network, no config
+- Pipeline mode (separate): requires `OPENAI_API_KEY` and makes API calls
 
-## Pipeline Mode (Bonus)
+## Pipeline Mode (Bonus — Requires Network)
 
 tokensave also works as a transparent OpenAI wrapper that cuts token usage
-automatically. If the user has installed it with `from tokensave import OpenAI`,
-their API calls go through normalize → cache → compress. But that's automatic —
-you don't need to do anything.
+automatically. **This mode requires an API key and makes network calls to
+your configured API endpoint.** If the user has installed it with
+`from tokensave import OpenAI`, their API calls go through normalize → cache
+→ compress. But that's automatic — you don't need to do anything.
+
+This mode is separate from `tokensave analyze`. The analyze command never
+makes network calls; it only reads local session data.
 
 ## Tier Reference
 

@@ -44,7 +44,7 @@ categories of waste:
 | Model mismatch | Simple queries running on expensive models |
 | Heartbeat waste | Cron/scheduled/idle-check messages on pro-tier |
 
-Output: ≤5 lines, actionable. Zero config. 100% local.
+Output: ≤5 lines, actionable. Zero config. Analyze mode is 100% local.
 
 ### Mode 2: Pipeline (v0.3.0, unchanged)
 
