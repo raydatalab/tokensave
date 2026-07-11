@@ -1,0 +1,115 @@
+{
+  "timestamp": "2026-07-11T10:00:00.000000",
+  "session_id": "20260711_100000_abc123",
+  "reason": "max_retries_exhausted",
+  "request": {
+    "method": "POST",
+    "url": "https://api.anthropic.com/v1/messages",
+    "headers": {},
+    "body": {
+      "model": "claude-opus-4-8",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a helpful coding assistant. Available tools: read_file, write_file, terminal, search_files, web_search."
+        },
+        {
+          "role": "user",
+          "content": "What does the config file look like?"
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call_01",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\": \"/app/config.py\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_01",
+          "tool_name": "read_file",
+          "content": "DEBUG=True\nDATABASE_URL=postgres://localhost/db\nSECRET_KEY=abc123\nLOG_LEVEL=INFO"
+        },
+        {
+          "role": "assistant",
+          "content": "The config file contains DEBUG=True, DATABASE_URL pointing to a local postgres, SECRET_KEY, and LOG_LEVEL=INFO."
+        },
+        {
+          "role": "user",
+          "content": "Can you check the database connection?"
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call_02",
+              "type": "function",
+              "function": {
+                "name": "terminal",
+                "arguments": "{\"command\": \"psql postgres://localhost/db -c 'SELECT 1'\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_02",
+          "tool_name": "terminal",
+          "content": "?column?\n--------\n       1\n(1 row)"
+        },
+        {
+          "role": "assistant",
+          "content": "The database connection is working."
+        },
+        {
+          "role": "user",
+          "content": "What does the config file look like again?"
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call_03",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\": \"/app/config.py\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_03",
+          "tool_name": "read_file",
+          "content": "DEBUG=True\nDATABASE_URL=postgres://localhost/db\nSECRET_KEY=abc123\nLOG_LEVEL=INFO"
+        },
+        {
+          "role": "assistant",
+          "content": "The config file has DEBUG=True, DATABASE_URL=postgres://localhost/db, SECRET_KEY=abc123, LOG_LEVEL=INFO."
+        },
+        {
+          "role": "user",
+          "content": "any updates?"
+        },
+        {
+          "role": "assistant",
+          "content": "No updates — everything is the same as before."
+        }
+      ]
+    }
+  },
+  "error": {
+    "type": "max_retries_exhausted",
+    "message": "Request failed after 3 retries"
+  }
+}
