@@ -7,7 +7,7 @@ def test_version():
     """Package exports a version string."""
     assert hasattr(tokensave, "__version__")
     assert isinstance(tokensave.__version__, str)
-    assert tokensave.__version__ == "0.4.0"
+    assert tokensave.__version__ == "0.4.2"
 
 
 def test_openai_class_exported():

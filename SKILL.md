@@ -1,7 +1,7 @@
 ---
 name: tokensave
 description: Use when analyzing token waste, costs, or API bills. Finds duplicate tool calls, context bloat, model mismatch, and heartbeat waste. 100% local, zero config.
-version: 0.4.1
+version: 0.4.2
 author: raydatalab
 license: Apache-2.0
 platforms: [linux, macos, wsl]
