@@ -1,4 +1,4 @@
-# TokenSave v0.4.1
+# TokenSave v0.4.2
 
 > Token waste analyzer for AI agents — find where your money goes and get one-click fix prompts.
 > `pip install tokensave` — bills go down.
@@ -9,28 +9,34 @@
 
 ---
 
-## What's New in 0.4.0
-
-**`tokensave analyze`** — find out where your agent is wasting tokens, and get a one-click fix.
-
-```bash
+```
 $ tokensave analyze
 
-Session 2026-07-11_abc123: 12,400 tokens, ~$0.19, 41% avoidable.
+Session test_123: 12,000 tokens, ~$0.05, 25% avoidable
 
-Top wastes:
-  #1 duplicate_tool_calls (8x): ~4,800 tokens — read the same file 8 times
-  #2 model_mismatch (5x): ~860 tokens — flash-tier queries ran on pro
-  #3 context_bloat: ~3,700 tokens — 40% of input is stale context
+  #1 duplicate_tool_calls (5x): 3,000 tokens
+      read_file called 5x with same path
 
-Send to your agent: "Before reading a file, check if you already read it..."
+Send to your agent: "Before calling any tool, check if you already have
+the result in a previous message..."
 ```
+
+tokensave scans your session → finds the waste → gives you the exact
+prompt to stop it. One command. Paste the output. Bills go down.
+
+All demo numbers above are from real test fixtures in `tests/test_analyzer.py`
+— 12,000 tokens, 3,000 wasted on duplicate reads, 25% avoidable.
+No made-up data.
+
+---
 
 ## What It Does (Two Modes)
 
-### Mode 1: Analyze (`tokensave analyze`) ← NEW in 0.4.0
+### Mode 1: Analyze (`tokensave analyze`)
 
-Reads Hermes session data from `~/.hermes/state.db` (SQLite, primary) or `~/.hermes/sessions/*.json` (API error dumps, fallback) and detects four categories of waste:
+Reads Hermes session data from `~/.hermes/state.db` (SQLite, primary) or
+`~/.hermes/sessions/*.json` (API error dumps, fallback) and detects four
+categories of waste:
 
 | Detector | What it finds |
 |----------|---------------|
@@ -43,9 +49,11 @@ Output: ≤5 lines, actionable. Zero config. 100% local.
 
 ### Mode 2: Pipeline (v0.3.0, unchanged)
 
-Transparent OpenAI wrapper — `from tokensave import OpenAI` — automatic normalization, exact-match cache, and context compression. Cuts token usage without changing your code.
+Transparent OpenAI wrapper — `from tokensave import OpenAI` — automatic
+normalization, exact-match cache, and context compression. Cuts token usage
+without changing your code.
 
-## Why Tokensave + Smart Router
+## Why TokenSave + Smart Router
 
 | | TokenSave | Smart Router |
 |---|:---:|:---:|
@@ -53,7 +61,8 @@ Transparent OpenAI wrapper — `from tokensave import OpenAI` — automatic norm
 | **Job** | "Here's where you're wasting money" | "Use this model instead" |
 | **User** | Run manually, get insights | Runs automatically, suggests switches |
 
-Use both for maximum savings: Smart Router prevents waste, TokenSave reveals what slipped through.
+Use both for maximum savings: Smart Router prevents waste, TokenSave reveals
+what slipped through.
 
 ## Install
 

@@ -1,7 +1,7 @@
 ---
 name: tokensave
 description: Use when analyzing token waste, costs, or API bills. Finds duplicate tool calls, context bloat, model mismatch, and heartbeat waste. 100% local, zero config.
-version: 0.4.2
+version: 0.4.3
 author: raydatalab
 license: Apache-2.0
 platforms: [linux, macos, wsl]
@@ -47,10 +47,23 @@ metadata:
 
 ## Overview
 
-Every day your agent wastes tokens — re-reading the same files, running on
-pro when flash would do, keeping stale context around. TokenSave analyzes
-your session and tells you exactly where the waste is, how much it costs,
-and gives you a ready-to-paste prompt to fix it.
+```
+$ tokensave analyze
+
+Session test_123: 12,000 tokens, ~$0.05, 25% avoidable
+
+  #1 duplicate_tool_calls (5x): 3,000 tokens
+      read_file called 5x with same path
+
+Send to your agent: "Before calling any tool, check if you already have
+the result in a previous message..."
+```
+
+tokensave scans your session → finds the waste → gives you the exact
+prompt to stop it. One command. Paste the output. Bills go down.
+
+The 25% above comes from real test fixtures: 12,000 tokens, 3,000 wasted
+on duplicate reads. All numbers are from `tests/test_analyzer.py`. No made-up data.
 
 ## When to Use
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tokensave"
-version = "0.4.2"
+version = "0.4.3"
 description = "Token waste analyzer for AI agents — find where your money goes and get one-click fix prompts. pip install, bills go down."
 readme = "README.md"
 license = "Apache-2.0"
