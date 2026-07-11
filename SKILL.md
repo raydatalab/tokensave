@@ -1,7 +1,7 @@
 ---
 name: tokensave
 description: Analyze your Hermes agent's token waste and get one-click fix prompts. Finds duplicate tool calls, context bloat, model mismatch, and heartbeat waste. 100% local, zero config.
-version: 0.4.0
+version: 0.4.1
 author: raydatalab
 license: Apache-2.0
 platforms: [linux, macos, wsl]
